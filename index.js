@@ -1,29 +1,67 @@
 const irc = require('irc');
 const NodeRSA = require('node-rsa');
 const b64 = require('js-base64').Base64;
+const fs = require('fs');
+const path = require('path');
 
 const stdin = process.stdin;
 
-const RSA_KEYPAIR_SIZE = 512;
-const CHANNEL = "#rsaoverirc";
-const NAME = "rsatests";
+const dirName = appDirectory = require('path').dirname(process.pkg ? process.execPath : (require.main ? require.main.filename : process.argv[0]));
+
+const args = require('args');
+
+args
+    .option("host", "The IRC server address", "irc.epiknet.org")
+    .option("port", "The IRC server port (currently unused)")
+    .option("nickname", "The desired nickname", "rsaoverirc")
+    .option("channel", "The broadcast channel", "#rsaoverirc")
+    .option("keypair", "The keypair path", path.join(dirName, "keypair.pem"))
+
+const flags = args.parse(process.argv);
+
+const RSA_KEYPAIR_SIZE = 1024;
+const CHANNEL = flags.channel;
+const NAME = flags.nickname;
+const HOSTNAME = flags.host;
+
+
+const KEY_PATH = flags.keypair;
 
 var keys = new Map();
 
 function sendMyPubKey(client, key)
 {
     client.say(CHANNEL, `KEY: ${b64.btoa(key.exportKey("public"))}`);
+    //client.say(CHANNEL, `KEY: ${key.exportKey("public").split('\n').join('')}`);
+}
+
+function loadMyKeyPair()
+{
+    console.log(`[BOOTING][KEYS] Trying to load key from ${KEY_PATH}...`);
+    let keyAlreadyExists = fs.existsSync(KEY_PATH);
+    if(keyAlreadyExists)
+    {
+        console.log(`[BOOTING][KEYS] Found the keys at ${KEY_PATH}...`);
+        return new NodeRSA(fs.readFileSync(KEY_PATH));
+    }
+    else
+    {
+        console.log(`[BOOTING][KEYS] couldn't find the keys at ${KEY_PATH}, generating...`);
+        let k = new NodeRSA({
+            b: RSA_KEYPAIR_SIZE
+        });
+        fs.writeFileSync(KEY_PATH, k.exportKey());
+        return k;
+    }
 }
 
 console.log(`[BOOTING] Generating a ${RSA_KEYPAIR_SIZE}-bits RSA keypair`);
 
-const key = new NodeRSA({
-    b: RSA_KEYPAIR_SIZE
-});
+const key = loadMyKeyPair();
 
 console.log("[BOOTING] Done generating. Connecting...");
 
-var client = new irc.Client("irc.epiknet.org", NAME, {
+var client = new irc.Client(HOSTNAME, NAME, {
     channels: [CHANNEL]
 });
 
@@ -32,6 +70,7 @@ client.addListener('message', (from, to, message) => {
     {
         let keyPemString = message.split('KEY: ')[1];
         let newKey = new NodeRSA(b64.atob(keyPemString));
+        //let newKey = new NodeRSA(keyPemString);
         keys.set(from, newKey);
         console.log(`Added ${from}'s key to the list.`);
 
