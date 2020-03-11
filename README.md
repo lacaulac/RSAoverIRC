@@ -1,6 +1,13 @@
 # RSA over IRC
-RSAoverIRC is an IRC client which main feature is using RSA keys to encrypt any communications. This leads to only being able to communicate with other RSAoverIRC clients or other software that might be using the same layered-on-top protocol.
-A clear-text feature should be included in the future.
+RSAoverIRC is an IRC client which main feature is using RSA keys to encrypt any communications. This leads to being able to communicate with other RSAoverIRC clients or other software that might be using the same layered-on-top protocol.
+You can communicate in clear text too.
+
+## Disclaimer
+This is mostly a proof-of-concept and an entertainment project. I'm aware of some flaws this could present and might try to fix those too.
+
+## How to use
+For the time being, you just need to start the program. You'll see a list of public keys being registered, which are users you can send messages to. Just type your message in the following format: `destination:Message`
+eg: `lacaulac:Hi. This is a test message.`
 
 ## Configuration
 There isn't much to do here as of yet, but the most plausible way to configure would be command-line arguments or a config file that could be provided by such command line arguments.

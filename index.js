@@ -2,6 +2,8 @@ const irc = require('irc');
 const NodeRSA = require('node-rsa');
 const b64 = require('js-base64').Base64;
 
+const stdin = process.stdin;
+
 const RSA_KEYPAIR_SIZE = 512;
 const CHANNEL = "#rsaoverirc";
 const NAME = "rsatests";
@@ -69,15 +71,25 @@ client.addListener("registered", () => {
         client.say(CHANNEL, `KEY: ${b64.btoa(key.exportKey("public"))}`);
     
         console.log("[BOOTING] Public key sent. Ready for interaction...");
+
+        stdin.addListener("data", (rawData) => {
+            let spl = rawData.toString().split(":");
+            let dest = spl[0];
+            let msg = spl[1];
+            let finalMsg = "";
+            if(keys.has(dest))
+            {
+                //Do the encryption
+                finalMsg = "MSG: " + keys.get(dest).encrypt(msg, "base64");
+                console.log(`[Message ${NAME} => ${dest}] ${msg}`);
+            }
+            else
+            {
+                finalMsg = msg;
+            }
+            client.say(dest, finalMsg);
+        });
     });
 
     
 });
-
-//*
-
-//client.join("#rsaoverirc");
-
-
-
-//*/
