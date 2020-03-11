@@ -31,8 +31,17 @@ var keys = new Map();
 
 function sendMyPubKey(client, key)
 {
-    client.say(CHANNEL, `KEY: ${b64.btoa(key.exportKey("public"))}`);
+    let tmpKey = b64.btoa(key.exportKey("public"));
+    console.log(`[KEYS] Emitting our key of length ${tmpKey.length}`);
+    client.say(CHANNEL, `KEY: ${tmpKey}`);
     //client.say(CHANNEL, `KEY: ${key.exportKey("public").split('\n').join('')}`);
+}
+
+function sendMessage(client, dest, msg)
+{
+    let finalMsg = "MSG: " + keys.get(dest).encrypt(msg, "base64");
+    console.log(`[Message ${NAME} => ${dest}] ${msg}`);
+    client.say(dest, finalMsg);
 }
 
 function loadMyKeyPair()
@@ -73,10 +82,6 @@ client.addListener('message', (from, to, message) => {
         //let newKey = new NodeRSA(keyPemString);
         keys.set(from, newKey);
         console.log(`Added ${from}'s key to the list.`);
-
-        //Let's say hello!
-        let newMessage = newKey.encrypt(`Hello! My name is ${NAME}`, "base64");
-        client.say(from, `MSG: ${newMessage}`);
     }
     else if(message.indexOf('REQKEYS') != -1)
     {
@@ -106,12 +111,31 @@ client.addListener("registered", () => {
     
         console.log("[BOOTING] Sent a key request. Now sending my key...");
     
-        client.say(CHANNEL, `KEY: ${b64.btoa(key.exportKey("public"))}`);
+        sendMyPubKey(client, key);
     
         console.log("[BOOTING] Public key sent. Ready for interaction...");
 
         stdin.addListener("data", (rawData) => {
-            let spl = rawData.toString().split(":");
+            let data = rawData.toString();
+            if(data.indexOf("/list") == 0)
+            {
+                console.log("[LIST][BEGIN] Using RSAoverIRC");
+                keys.forEach((val, k, map) => {
+                    console.log(`[LIST] ${k}`);
+                });
+                console.log("[LIST][END] Using RSAoverIRC");
+                return;
+            }
+            else if(data.indexOf("/broadcast") == 0) {
+                console.log("[LIST][BEGIN] Broadcasting to all RSAoverIRC users");
+                let msg = data.split("/broadcast ")[1];
+                keys.forEach((val, k, map) => {
+                    sendMessage(client, k, msg);
+                });
+                console.log("[LIST][END] Broadcasting to all RSAoverIRC users");
+                return;
+            }
+            let spl = data.split(":");
             let dest = spl[0];
             let msg = spl[1];
             let finalMsg = "";
