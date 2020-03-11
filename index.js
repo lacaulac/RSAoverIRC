@@ -16,6 +16,7 @@ args
     .option("nickname", "The desired nickname", "rsaoverirc")
     .option("channel", "The broadcast channel", "#rsaoverirc")
     .option("keypair", "The keypair path", path.join(dirName, "keypair.pem"))
+    .option("debug", "Should we print unnecessary information?", false)
 
 const flags = args.parse(process.argv);
 
@@ -23,6 +24,7 @@ const RSA_KEYPAIR_SIZE = 1024;
 const CHANNEL = flags.channel;
 const NAME = flags.nickname;
 const HOSTNAME = flags.host;
+const IS_DEBUG = flags.debug;
 
 
 const KEY_PATH = flags.keypair;
@@ -32,7 +34,8 @@ var keys = new Map();
 function sendMyPubKey(client, key)
 {
     let tmpKey = b64.btoa(key.exportKey("public"));
-    console.log(`[KEYS] Emitting our key of length ${tmpKey.length}`);
+    if(IS_DEBUG)
+        console.log(`[KEYS] Emitting our key of length ${tmpKey.length}`);
     client.say(CHANNEL, `KEY: ${tmpKey}`);
     //client.say(CHANNEL, `KEY: ${key.exportKey("public").split('\n').join('')}`);
 }
@@ -55,20 +58,19 @@ function loadMyKeyPair()
     }
     else
     {
-        console.log(`[BOOTING][KEYS] couldn't find the keys at ${KEY_PATH}, generating...`);
+        console.log(`[BOOTING][KEYS] couldn't find the keys at ${KEY_PATH}, generating a ${RSA_KEYPAIR_SIZE}-bits RSA keypair...`);
         let k = new NodeRSA({
             b: RSA_KEYPAIR_SIZE
         });
         fs.writeFileSync(KEY_PATH, k.exportKey());
+        console.log(`[BOOTING][KEYS] Done generating keys.`);
         return k;
     }
 }
 
-console.log(`[BOOTING] Generating a ${RSA_KEYPAIR_SIZE}-bits RSA keypair`);
-
 const key = loadMyKeyPair();
 
-console.log("[BOOTING] Done generating. Connecting...");
+console.log("[BOOTING] Done loading keys. Connecting...");
 
 var client = new irc.Client(HOSTNAME, NAME, {
     channels: [CHANNEL]
@@ -87,7 +89,8 @@ client.addListener('message', (from, to, message) => {
     }
     else if(message.indexOf('REQKEYS') != -1)
     {
-        console.log(`[KEYS] Received a key request from ${from}. Sending the pubkey!`);
+        if(IS_DEBUG)
+            console.log(`[KEYS] Received a key request from ${from}. Sending the pubkey!`);
         sendMyPubKey(client, key);
     }
     else if(message.indexOf('MSG: ') != -1)
@@ -114,16 +117,20 @@ client.addListener('error', function(message) {
 client.addListener("registered", () => {
 
     client.join(CHANNEL, () => {
-        console.log("[BOOTING] Connected. Sending public key request...");
+        if(IS_DEBUG)
+            console.log("[BOOTING] Connected. Sending public key request...");
 
         client.say(CHANNEL, "REQKEYS");
     
-        console.log("[BOOTING] Sent a key request. Now sending my key...");
+        if(IS_DEBUG)
+            console.log("[BOOTING] Sent a key request. Now sending my key...");
     
         sendMyPubKey(client, key);
     
-        console.log("[BOOTING] Public key sent. Ready for interaction...");
-
+        if(IS_DEBUG)
+            console.log("[BOOTING] Public key sent. Ready for interaction...");
+        else
+            console.log("[BOOTING] Connected!");
         stdin.addListener("data", (rawData) => {
             let data = rawData.toString();
             if(data.indexOf("/list") == 0)

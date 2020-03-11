@@ -1,6 +1,6 @@
 {
   "name": "rsaoverirc",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Send RSA-ciphered messages over IRC!",
   "main": "index.js",
   "scripts": {
