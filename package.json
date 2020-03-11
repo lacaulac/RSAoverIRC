@@ -1,0 +1,29 @@
+{
+  "name": "rsaoverirc",
+  "version": "1.0.0",
+  "description": "Send RSA-ciphered messages over IRC!",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lacaulac/RSAoverIRC.git"
+  },
+  "keywords": [
+    "rsa",
+    "irc",
+    "e2e"
+  ],
+  "author": "lacaulac",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/lacaulac/RSAoverIRC/issues"
+  },
+  "homepage": "https://github.com/lacaulac/RSAoverIRC#readme",
+  "dependencies": {
+    "irc": "^0.5.2",
+    "js-base64": "^2.5.2",
+    "node-rsa": "^1.0.7"
+  }
+}
