@@ -77,15 +77,17 @@ var client = new irc.Client(HOSTNAME, NAME, {
 client.addListener('message', (from, to, message) => {
     if(message.indexOf("KEY: ") != -1)
     {
-        let keyPemString = message.split('KEY: ')[1];
-        let newKey = new NodeRSA(b64.atob(keyPemString));
-        //let newKey = new NodeRSA(keyPemString);
-        keys.set(from, newKey);
-        console.log(`Added ${from}'s key to the list.`);
+        if(!keys.has(from))
+        {
+            console.log(`[I/O] ${from} joined the channel.`);
+            let keyPemString = message.split('KEY: ')[1];
+            let newKey = new NodeRSA(b64.atob(keyPemString));
+            keys.set(from, newKey);
+        }
     }
     else if(message.indexOf('REQKEYS') != -1)
     {
-        console.log(`Received a key request from ${from}. Sending the pubkey!`);
+        console.log(`[KEYS] Received a key request from ${from}. Sending the pubkey!`);
         sendMyPubKey(client, key);
     }
     else if(message.indexOf('MSG: ') != -1)
@@ -100,7 +102,14 @@ client.addListener('message', (from, to, message) => {
     }
 });
 client.addListener('error', function(message) {
-    console.log('error: ', message);
+    switch(message.command)
+    {
+        case "err_nosuchnick":
+            console.log(`[ERROR] Couldn't send a message to ${message.args[1]}: No such nick`);
+            break;
+        default:
+            console.log('error: ', message);
+    }
 });
 client.addListener("registered", () => {
 
@@ -126,14 +135,23 @@ client.addListener("registered", () => {
                 console.log("[LIST][END] Using RSAoverIRC");
                 return;
             }
-            else if(data.indexOf("/broadcast") == 0) {
-                console.log("[LIST][BEGIN] Broadcasting to all RSAoverIRC users");
+            else if(data.indexOf("/broadcast ") == 0 || data.indexOf("/b ") == 0) {
+                console.log("[BROADCAST][BEGIN] Broadcasting to all RSAoverIRC users");
                 let msg = data.split("/broadcast ")[1];
+                if(msg === undefined)
+                    msg = data.split("/b ")[1];
                 keys.forEach((val, k, map) => {
                     sendMessage(client, k, msg);
                 });
-                console.log("[LIST][END] Broadcasting to all RSAoverIRC users");
+                console.log("[BROADCAST][END] Broadcasting to all RSAoverIRC users");
                 return;
+            }
+            else if(data.indexOf("/quit") == 0)
+            {
+                client.part(CHANNEL, "Bye bye", () => {
+                    console.log("[QUIT] See you soon!");
+                    process.exit(0);
+                });
             }
             let spl = data.split(":");
             let dest = spl[0];
@@ -152,6 +170,12 @@ client.addListener("registered", () => {
             client.say(dest, finalMsg);
         });
     });
+});
 
-    
+client.addListener("part", (channel, nick, reason, message) => {
+    if(keys.has(nick))
+    {
+        console.log(`[I/O] ${nick} left the channel.`);
+        keys.delete(nick);
+    }
 });
