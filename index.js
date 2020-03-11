@@ -13,7 +13,7 @@ const args = require('args');
 args
     .option("host", "The IRC server address", "irc.epiknet.org")
     .option("port", "The IRC server port (currently unused)")
-    .option("nickname", "The desired nickname", "rsaoverirc")
+    .option("nickname", "Desired nickname", "rsaoverirc")
     .option("channel", "The broadcast channel", "#rsaoverirc")
     .option("keypair", "The keypair path", path.join(dirName, "keypair.pem"))
     .option("debug", "Should we print unnecessary information?", false)

@@ -1,18 +1,43 @@
-# RSA over IRC
-RSAoverIRC is an IRC client which main feature is using RSA keys to encrypt any communications. This leads to being able to communicate with other RSAoverIRC clients or other software that might be using the same layered-on-top protocol.
-You can communicate in clear text too.
+# RSAoverIRC
+RSAoverIRC is an IRC client which main feature is using RSA keys to encrypt any communications. This leads to being able to communicate with other RSAoverIRC clients or other RSAonIRC compliant software.
+You can use this client to communicate in clear text, even though I don't get why you would do that!
 
 ## Disclaimer
-This is mostly a proof-of-concept and an entertainment project. I'm aware of some flaws this could present and might try to fix those too.
+This is mostly a proof-of-concept and an entertainment project. I'm aware of some flaws this could present and might try to fix those too. Also it's hella cumbersome to use.
 
 ## How to use
+
+### Launch parameters
+```
+Options:
+    -c, --channel [value]   The broadcast channel (defaults to "#rsaoverirc")
+    -d, --debug             Should we print unnecessary information? (disabled by default)
+    -H, --help              Output usage information
+    -h, --host [value]      The IRC server address (defaults to "irc.epiknet.org")
+    -k, --keypair [value]   The keypair path (defaults to ".\\keypair.pem")
+    -n, --nickname [value]  Desired nickname (defaults to "rsaoverirc")
+    -p, --port              The IRC server port (currently unused)
+    -v, --version           Output the version number
+```
+
+### Once connected
 For the time being, you just need to start the program. You'll see a list of public keys being registered, which are users you can send messages to. Just type your message in the following format: `destination:Message`
 eg: `lacaulac:Hi. This is a test message.`
 
+There's also 3 commands available:
+- `/list`: Lists connected users running a RSAonIRC compliant client
+    - **Known bug:** Users not using the command `/quit` might not disappear from the list
+- `/broadcast <msg>`: Sends a message to every RSAonIRC user connected on the same broadcast channel
+    - The `/b <msg>` alias also works
+- `/quit`: Disconnects from the channel and exits the client
+
 ## Configuration
-There isn't much to do here as of yet, but the most plausible way to configure would be command-line arguments or a config file that could be provided by such command line arguments.
+You can kinda "configure" the program through command line arguments, but a configuration file system should be coming soon!
 
 ## Protocol
+
+*If you're only using RSAoverIRC, this might be a bit boring*
+
 ### Requesting keys
 
 To request the public keys of everyone in the current channel, the command is `REQKEYS`. This will make every client issue a `KEY` command.
