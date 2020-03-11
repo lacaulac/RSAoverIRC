@@ -96,7 +96,6 @@ client.addListener('message', (from, to, message) => {
 });
 client.addListener('error', function(message) {
     console.log('error: ', message);
-    client.say("lacaulac", `I got this error message: ${message}`);
 });
 client.addListener("registered", () => {
 
